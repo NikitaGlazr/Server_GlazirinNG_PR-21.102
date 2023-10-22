@@ -1,0 +1,254 @@
+Сервер:
+import socket
+import threading
+
+# Создание сокета
+server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+# Установка адреса и порта сервера
+server_address = ('localhost', 12345)
+server_socket.bind(server_address)
+
+# Ожидание подключения клиентов
+server_socket.listen(2)
+print('The server is running and waiting for clients to connect...')
+
+# Список клиентов
+clients = []
+
+# Функция для обработки сообщений от клиентов
+def handle_client(client_socket, client_address):
+    while True:
+        try:
+            # Получение сообщения от клиента
+            message = client_socket.recv(1024).decode('utf-8')
+            if message:
+                print(f'Message from {client_address}: {message}')
+                # Отправка сообщения всем клиентам, кроме отправляющего
+                for client in clients:
+                    if client != client_socket:
+                        client.sendall(message.encode('utf-8'))
+            else:
+                # Удаление клиента из списка при отключении
+                clients.remove(client_socket)
+                print(f'Client {client_address} disconnected')
+                break
+        except:
+            # Удаление клиента из списка при ошибке
+            clients.remove(client_socket)
+            print(f'Client {client_address} disconnected')
+            break
+
+# Основной цикл для принятия подключений
+while True:
+    # Принятие подключения клиента
+    client_socket, client_address = server_socket.accept()
+    print(f'Client {client_address} connected')
+
+    # Добавление клиента в список
+    clients.append(client_socket)
+
+    # Запуск потока для обработки сообщений от клиента
+    client_thread = threading.Thread(target=handle_client, args=(client_socket, client_address))
+    client_thread.start()
+Описание:
+import socket
+import threading
+```
+Импортируем модули `socket` и `threading`.
+
+```python
+server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+```
+Создаем объект сокета для сервера, используя `socket.AF_INET` для указания семейства адресов IPv4 и `socket.SOCK_STREAM` для указания типа сокета TCP.
+
+```python
+server_address = ('localhost', 12345)
+server_socket.bind(server_address)
+```
+Устанавливаем адрес и порт сервера, в данном случае `localhost` и порт `12345`. Затем связываем сокет сервера с указанным адресом и портом.
+
+```python
+server_socket.listen(2)
+```
+Ожидаем подключение клиентов. Метод `listen(2)` указывает серверу прослушивать до 2 клиентских подключений.
+
+```python
+print('The server is running and waiting for clients to connect...')
+```
+Выводим сообщение о том, что сервер работает и ожидает подключения клиентов.
+
+```python
+clients = []
+```
+Создаем пустой список `clients` для хранения подключенных клиентов.
+
+```python
+def handle_client(client_socket, client_address):
+    while True:
+        try:
+            message = client_socket.recv(1024).decode('utf-8')
+            if message:
+                print(f'Message from {client_address}: {message}')
+                for client in clients:
+                    if client != client_socket:
+                        client.sendall(message.encode('utf-8'))
+            else:
+                clients.remove(client_socket)
+                print(f'Client {client_address} disconnected')
+                break
+        except:
+            clients.remove(client_socket)
+            print(f'Client {client_address} disconnected')
+            break
+```
+Определяем функцию `handle_client`, которая обрабатывает сообщения от клиентов. Внутри бесконечного цикла функция получает сообщение от клиента через его сокет `client_socket`. Если сообщение получено, оно выводится на экран, а затем отправляется всем клиентам, кроме отправителя. Если сообщение не получено (клиент отключился), клиент удаляется из списка `clients` и происходит выход из цикла. Если возникает ошибка при получении сообщения, клиент также удаляется из списка и происходит выход из цикла.
+
+```python
+while True:
+    client_socket, client_address = server_socket.accept()
+    print(f'Client {client_address} connected')
+    clients.append(client_socket)
+    client_thread = threading.Thread(target=handle_client, args=(client_socket, client_address))
+    client_thread.start()
+```
+Основной цикл сервера, который ожидает подключения клиентов. Когда клиент подключается, метод `accept()` возвращает новый сокет `client_socket` и адрес клиента `client_address`. Затем клиентский сокет добавляется в список `clients` и запускается отдельный поток `client_thread`, который вызывает функцию `handle_client` для обработки сообщений от клиента.
+___________________________________________________________________________________________________________
+
+
+
+
+Клиенты:
+
+import socket
+import threading
+
+# Создание сокета
+client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+# Установка адреса и порта сервера
+server_address = ('localhost', 12345)
+client_socket.connect(server_address)
+
+# Функция для отправки сообщений серверу
+def send_message():
+    while True:
+        message = input("Enter a message: \n")
+        client_socket.sendall(message.encode('utf-8'))
+
+# Функция для получения сообщений от сервера
+def receive_message():
+    while True:
+        message = client_socket.recv(1024).decode('utf-8')
+        print(f'\nMessage received: {message}')
+        print("Enter a message: ")
+
+# Запуск потоков для отправки и получения сообщений
+send_thread = threading.Thread(target=send_message)
+receive_thread = threading.Thread(target=receive_message)
+send_thread.start()
+receive_thread.start()
+
+Описание:
+```python
+import socket
+import threading
+```
+Импортируем модули `socket` и `threading`.
+
+```python
+client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+```
+Создаем объект сокета для клиента, используя `socket.AF_INET` для указания семейства адресов IPv4 и `socket.SOCK_STREAM` для указания типа сокета TCP.
+
+```python
+server_address = ('localhost', 12345)
+client_socket.connect(server_address)
+```
+Устанавливаем адрес и порт сервера, к которому клиент будет подключаться, в данном случае `localhost` и порт `12345`. Затем клиентский сокет подключается к указанному серверу.
+
+```python
+def send_message():
+    while True:
+        message = input("Enter a message: \n")
+        client_socket.sendall(message.encode('utf-8'))
+```
+Определяем функцию `send_message`, которая будет отправлять сообщения серверу. Внутри бесконечного цикла функция запрашивает у пользователя ввод сообщения с помощью `input()`, затем отправляет введенное сообщение серверу через клиентский сокет.
+
+```python
+def receive_message():
+    while True:
+        message = client_socket.recv(1024).decode('utf-8')
+        print(f'\nMessage received: {message}')
+        print("Enter a message: ")
+```
+Определяем функцию `receive_message`, которая будет получать сообщения от сервера. Внутри бесконечного цикла функция принимает сообщение от сервера через клиентский сокет с помощью `recv()`, затем декодирует полученное сообщение в строку и выводит на экран. Затем выводится приглашение для ввода нового сообщения.
+
+```python
+send_thread = threading.Thread(target=send_message)
+receive_thread = threading.Thread(target=receive_message)
+send_thread.start()
+receive_thread.start()
+```
+Создаем два потока: `send_thread` для отправки сообщений и `receive_thread` для получения сообщений. Каждый поток запускается с помощью метода `start()`. Таким образом, отправка и получение сообщений между клиентом и сервером происходит параллельно в отдельных потоках.
+
+
+
+______________________________________________________________________________________________________________
+
+
+
+1. import socket - импортируем модуль socket для работы с сокетами.
+2. import threading - импортируем модуль threading для работы с потоками.
+3. server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM) - создаем объект сокета с помощью функции socket(). Указываем параметры AF_INET (IPv4) и SOCK_STREAM (TCP).
+4. server_address = ('localhost', 12345) - устанавливаем адрес и порт сервера в виде кортежа.
+5. server_socket.bind(server_address) - связываем объект сокета с указанным адресом и портом.
+6. server_socket.listen(2) - указываем максимальное количество подключений, которые может обслуживать сервер.
+7. print('The server is running and waiting for clients to connect...') - выводим сообщение о том, что сервер запущен и ожидает подключений клиентов.
+8. clients = [] - создаем пустой список клиентов, которые подключились к серверу.
+9. def handle_client(client_socket, client_address): - определяем функцию для обработки сообщений от клиента. Принимает два аргумента: объект сокета клиента и его адрес.
+10. while True: - запускаем бесконечный цикл для получения сообщений от клиента.
+11. try: - начинаем блок try-except для обработки ошибок.
+12. message = client_socket.recv(1024).decode('utf-8') - получаем сообщение от клиента (максимальная длина сообщения - 1024 байта) и декодируем его из байтовой строки в строку Unicode с помощью метода decode().
+13. if message: - проверяем, что сообщение не пустое.
+14. print(f'Message from {client_address}: {message}') - выводим сообщение в консоль с указанием адреса клиента.
+15. for client in clients: - запускаем цикл для отправки сообщения всем клиентам, кроме отправляющего.
+16. if client != client_socket: - проверяем, что клиент не является отправляющим.
+17. client.sendall(message.encode('utf-8')) - отправляем сообщение всем остальным клиентам в байтовом виде с помощью метода sendall().
+18. else: - если сообщение пустое, то клиент отключился.
+19. clients.remove(client_socket) - удаляем клиента из списка клиентов.
+20. print(f'Client {client_address} disconnected') - выводим сообщение о том, что клиент отключился.
+21. break - завершаем цикл.
+22. except: - обрабатываем ошибку, если она возникла.
+23. clients.remove(client_socket) - удаляем клиента из списка клиентов.
+24. print(f'Client {client_address} disconnected') - выводим сообщение о том, что клиент отключился.
+25. break - завершаем цикл.
+26. while True: - запускаем бесконечный цикл для принятия подключений клиентов.
+27. client_socket, client_address = server_socket.accept() - принимаем подключение клиента и получаем его объект сокета и адрес.
+28. print(f'Client {client_address} connected') - выводим сообщение о том, что клиент подключился.
+29. clients.append(client_socket) - добавляем объект сокета клиента в список клиентов.
+30. client_thread = threading.Thread(target=handle_client, args=(client_socket, client_address)) - создаем поток для обработки сообщений от клиента с помощью функции Thread(). Указываем целевую функцию handle_client() и аргументы.
+31. client_thread.start() - запускаем поток для обработки сообщений от клиента.
+--------------------------------------------------------------------------------------------
+1. import socket - импортируем модуль socket для работы с сокетами.
+2. import threading - импортируем модуль threading для работы с потоками.
+3. client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM) - создаем объект сокета с помощью функции socket(). Указываем параметры AF_INET (IPv4) и SOCK_STREAM (TCP).
+4. server_address = ('localhost', 12345) - устанавливаем адрес и порт сервера в виде кортежа.
+5. client_socket.connect(server_address) - устанавливаем соединение с сервером.
+6. def send_message(): - определяем функцию для отправки сообщений серверу.
+7. while True: - запускаем бесконечный цикл для ввода сообщений и отправки их серверу.
+8. message = input("Enter a message: \n") - получаем сообщение от пользователя.
+9. client_socket.sendall(message.encode('utf-8')) - отправляем сообщение серверу в байтовом виде с помощью метода sendall().
+10. def receive_message(): - определяем функцию для получения сообщений от сервера.
+11. while True: - запускаем бесконечный цикл для получения сообщений от сервера.
+12. message = client_socket.recv(1024).decode('utf-8') - получаем сообщение от сервера (максимальная длина сообщения - 1024 байта) и декодируем его из байтовой строки в строку Unicode с помощью метода decode().
+13. print(f'\nMessage received: {message}') - выводим сообщение от сервера в консоль.
+14. print("Enter a message: ") - выводим приглашение для ввода нового сообщения.
+15. send_thread = threading.Thread(target=send_message) - создаем поток для отправки сообщений серверу с помощью функции Thread(). Указываем целевую функцию send_message().
+16. receive_thread = threading.Thread(target=receive_message) - создаем поток для получения сообщений от сервера с помощью функции Thread(). Указываем целевую функцию receive_message().
+17. send_thread.start() - запускаем поток для отправки сообщений серверу.
+18. receive_thread.start() - запускаем поток для получения сообщений от сервера.
+
+
+
+
